@@ -1,59 +1,495 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PHP_Laravel12_GeoIP
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Laravel](https://img.shields.io/badge/Laravel-12-red)
+![PHP](https://img.shields.io/badge/PHP-8.x-blue)
+![GeoIP](https://img.shields.io/badge/GeoIP-MaxMind-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+##  Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+PHP_Laravel12_GeoIP is a Laravel 12 project that integrates MaxMind GeoLite2 database using the Torann GeoIP package to detect visitor location based on IP address.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The project:
+- Detects country, city, latitude, longitude
+- Stores visitor data in database
+- Displays location with Google Maps
+- Shows country flag dynamically
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+##  Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- MaxMind GeoLite2 Database Integration
+- Torann GeoIP Package Setup
+- Visitor Location Detection
+- Database Storage of Visitor Data
+- Dynamic Country Flag Display
+- Embedded Google Maps View
+- Fallback Default Location
+- Cache Enabled GeoIP Lookup
 
-## Laravel Sponsors
+---
+##  Folder Structure
+```
+Laravel12_GeoIP/
+│
+├── app/
+│ ├── Http/Controllers/GeoController.php
+│ └── Models/Visitor.php
+│
+├── config/
+│ └── geoip.php
+│
+├── database/
+│ └── migrations/xxxx_create_visitors_table.php
+│
+├── resources/views/geo/
+│ └── detect.blade.php
+│
+├── routes/
+│ └── web.php
+│
+└── storage/app/geoip/
+└── GeoLite2-City.mmdb
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+---
 
-### Premium Partners
+## 1. Project Installation
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Create New Laravel Project
 
-## Contributing
+```bash
+composer create-project laravel/laravel Laravel12_GeoIP
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Start Server
 
-## Code of Conduct
+```bash
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Open in Browser
 
-## Security Vulnerabilities
+```
+http://127.0.0.1:8000
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## .env Configuration
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+
+CACHE_STORE=file
+CACHE_DRIVER=file
+```
+
+---
+
+## 2. Download MaxMind Database
+
+1. Create account at:
+
+   [https://www.maxmind.com](https://www.maxmind.com)
+
+2. Download:
+
+   GeoLite2-City.mmdb
+
+   <img width="1146" height="847" alt="Screenshot 2026-02-12 130047" src="https://github.com/user-attachments/assets/bf15f0d8-6345-474e-a847-62d4ef210c7e" />
+
+
+4. Create folder inside project:
+
+```
+storage/app/geoip/
+```
+
+4. Place file here:
+
+```
+storage/app/geoip/GeoLite2-City.mmdb
+```
+
+---
+
+## 3. Install GeoIP Package
+
+### Install Torann GeoIP Package
+
+```bash
+composer require torann/geoip
+```
+
+### Install Required MaxMind Dependency
+
+```bash
+composer require geoip2/geoip2
+```
+
+### Publish Config File
+
+```bash
+php artisan vendor:publish --provider="Torann\GeoIP\GeoIPServiceProvider"
+```
+
+---
+
+## 4. Configure GeoIP
+
+Open:
+
+```
+config/geoip.php
+```
+
+Replace with:
+
+```php
+<?php
+
+return [
+
+    // Enable logging when a GeoIP lookup fails
+    'log_failures' => true,
+
+    // Include currency information based on country ISO code
+    'include_currency' => true,
+
+    // Set the default GeoIP service driver
+    'service' => 'maxmind_database',
+
+    // Configure available GeoIP services
+    'services' => [
+
+        // MaxMind local database configuration
+        'maxmind_database' => [
+            'class' => \Torann\GeoIP\Services\MaxMindDatabase::class,
+            'database_path' => storage_path('app/geoip/GeoLite2-City.mmdb'),
+            'locales' => ['en'],
+        ],
+    ],
+
+    // Enable caching for GeoIP lookups
+    'cache' => 'all',
+
+    // Disable cache tagging (file cache does not support tags)
+    'cache_tags' => [],
+
+    // Cache expiration time in minutes
+    'cache_expires' => 30,
+
+    // Default fallback location if IP lookup fails
+    'default_location' => [
+        'ip' => '127.0.0.1',
+        'iso_code' => 'IN',
+        'country' => 'India',
+        'city' => 'Ahmedabad',
+        'state' => 'GJ',
+        'state_name' => 'Gujarat',
+        'postal_code' => '380001',
+        'lat' => 23.0225,
+        'lon' => 72.5714,
+        'timezone' => 'Asia/Kolkata',
+        'continent' => 'AS',
+        'default' => true,
+        'currency' => 'INR',
+    ],
+
+];
+```
+
+### Clear Cache
+
+```bash
+php artisan config:clear
+
+php artisan cache:clear
+```
+
+---
+
+## 5. Create Visitor Model & Migration
+
+```bash
+php artisan make:model Visitor -m
+```
+
+### Migration File
+
+```php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('visitors', function (Blueprint $table) {
+            $table->id();
+            $table->string('ip_address')->nullable();
+            $table->string('country')->nullable();
+            $table->string('city')->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('visitors');
+    }
+};
+```
+
+Run migration:
+
+```bash
+php artisan migrate
+```
+
+---
+
+### Visitor Model
+
+File: `app/Models/Visitor.php`
+
+```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Visitor extends Model
+{
+    protected $fillable = [
+        'ip_address',
+        'country',
+        'city',
+        'latitude',
+        'longitude',
+    ];
+}
+```
+
+---
+
+## 6. Create Controller
+
+```bash
+php artisan make:controller GeoController
+```
+
+File: `app/Http/Controllers/GeoController.php`
+
+```php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Visitor;
+
+class GeoController extends Controller
+{
+    public function detectLocation(Request $request)
+    {
+        $ip = $request->get('ip', $request->ip());
+
+        if ($ip == "127.0.0.1") {
+            $ip = "49.36.0.1";
+        }
+
+        $location = geoip($ip);
+
+        Visitor::create([
+            'ip_address' => $ip,
+            'country' => $location->country,
+            'city' => $location->city,
+            'latitude' => $location->lat,
+            'longitude' => $location->lon,
+        ]);
+
+        return view('geo.detect', [
+            'ip' => $ip,
+            'country' => $location->country ?? 'Not Available',
+            'city' => $location->city ?? 'Not Available',
+            'latitude' => $location->lat ?? null,
+            'longitude' => $location->lon ?? null,
+            'iso' => $location->iso_code ?? 'us'
+        ]);
+    }
+}
+```
+
+---
+
+## 7. Route
+
+File: `routes/web.php`
+
+```php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GeoController;
+
+Route::get('/detect-location', [GeoController::class, 'detectLocation']);
+```
+
+---
+
+## 8. Create Blade View (UI)
+
+File: `resources/views/geo/detect.blade.php`
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Geo Location</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            width: 450px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            color: white;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+        }
+
+        .info {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .badge {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #ffffff;
+            color: #764ba2;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        iframe {
+            margin-top: 20px;
+            width: 100%;
+            height: 200px;
+            border-radius: 15px;
+            border: none;
+        }
+
+        .flag {
+            width: 40px;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        .footer {
+            margin-top: 15px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2> Your Geo Location</h2>
+
+    <div class="info">
+        <span class="label">IP:</span> {{ $ip }}
+    </div>
+
+    <div class="info">
+        <span class="label">Country:</span>
+        {{ $country }}
+        @if($country !== 'Not Available')
+            <img class="flag"
+                 src="https://flagcdn.com/48x36/{{ strtolower(geoip($ip)->iso_code ?? 'us') }}.png">
+        @endif
+    </div>
+
+    <div class="info">
+        <span class="label">City:</span> {{ $city }}
+    </div>
+
+    <div class="info">
+        <span class="label">Latitude:</span> {{ $latitude }}
+    </div>
+
+    <div class="info">
+        <span class="label">Longitude:</span> {{ $longitude }}
+    </div>
+
+    <div class="badge">
+        Live Location Detected
+    </div>
+
+    @if($latitude && $longitude)
+        <iframe
+            src="https://maps.google.com/maps?q={{ $latitude }},{{ $longitude }}&hl=en&z=6&output=embed">
+        </iframe>
+    @endif
+
+    <div class="footer">
+        Laravel GeoIP Advanced Integration
+    </div>
+</div>
+
+</body>
+</html>
+
+---
+```
+
+## 9. Outputs
+
+### Test India Output
+
+```
+http://127.0.0.1:8000/detect-location?ip=49.36.0.1
+```
+Expected Output:
+
+<img width="615" height="683" alt="Screenshot 2026-02-12 121126" src="https://github.com/user-attachments/assets/33b1c6a6-457e-4952-9c0a-aba4ad89fee2" />
+
+### Test USA Output
+
+```
+http://127.0.0.1:8000/detect-location?ip=73.162.0.1
+```
+Expected Output:
+
+<img width="616" height="684" alt="Screenshot 2026-02-12 122014" src="https://github.com/user-attachments/assets/ff5b4e95-954e-4fb7-b861-8dc3546013fd" />
+
