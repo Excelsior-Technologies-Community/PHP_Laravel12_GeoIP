@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GeoController;
 
 
+Route::get('/', function () {
+    return redirect()->route('geo.dashboard');
+});
+
 /*
 |--------------------------------------------------------------------------
 | GeoIP Detection
@@ -92,3 +96,46 @@ Route::get('/geo-map', [GeoController::class, 'map'])
 
 Route::get('/geo-location-insights', [GeoController::class, 'locationInsights'])
     ->name('geo.location-insights');
+
+
+/*
+|--------------------------------------------------------------------------
+| Real-Time GeoIP Firewall & Country Access Control Studio
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/geo-firewall', [GeoController::class, 'firewall'])
+    ->name('geo.firewall');
+
+Route::post('/geo-firewall/toggle', [GeoController::class, 'toggleFirewall'])
+    ->name('geo.firewall.toggle');
+
+Route::post('/geo-firewall/rule', [GeoController::class, 'updateFirewallRule'])
+    ->name('geo.firewall.rule');
+
+Route::post('/geo-firewall/mode', [GeoController::class, 'updateFirewallMode'])
+    ->name('geo.firewall.mode');
+
+Route::post('/geo-firewall/clear-logs', [GeoController::class, 'clearFirewallLogs'])
+    ->name('geo.firewall.clear-logs');
+
+
+/*
+|--------------------------------------------------------------------------
+| Real-Time Live Traffic World Heatmap Visualizer
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/geo-heatmap', [GeoController::class, 'heatmap'])
+    ->name('geo.heatmap');
+
+
+/*
+|--------------------------------------------------------------------------
+| Geo-Smart Currency, Timezone & Regional Localization Studio
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/geo-localization', [GeoController::class, 'localization'])
+    ->name('geo.localization');
+
