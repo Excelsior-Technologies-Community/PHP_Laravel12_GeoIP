@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Visitor;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class GeoController extends Controller
@@ -712,5 +713,255 @@ class GeoController extends Controller
         }
 
         return $query;
+    }
+
+
+    /**
+     * GeoIP Firewall Studio Dashboard
+     */
+    public function firewall()
+    {
+        $enabled = Cache::get('geo_firewall_enabled', false);
+        $mode = Cache::get('geo_firewall_mode', 'blacklist');
+        $blacklistedCountries = Cache::get('geo_firewall_countries', ['China', 'Russia', 'North Korea']);
+        $blacklistedIps = Cache::get('geo_firewall_ips', ['192.168.1.100']);
+        $whitelistedCountries = Cache::get('geo_firewall_whitelist_countries', ['India', 'United States']);
+        $blockedLogs = Cache::get('geo_firewall_blocked_logs', []);
+
+        $allCountries = Visitor::whereNotNull('country')
+            ->where('country', '!=', '')
+            ->distinct()
+            ->pluck('country');
+
+        return view('geo.firewall', compact(
+            'enabled',
+            'mode',
+            'blacklistedCountries',
+            'blacklistedIps',
+            'whitelistedCountries',
+            'blockedLogs',
+            'allCountries'
+        ));
+    }
+
+
+    /**
+     * Toggle GeoIP Firewall ON/OFF
+     */
+    public function toggleFirewall(Request $request)
+    {
+        $current = Cache::get('geo_firewall_enabled', false);
+        Cache::forever('geo_firewall_enabled', !$current);
+
+        $statusStr = !$current ? 'ENABLED' : 'DISABLED';
+
+        return redirect()->route('geo.firewall')
+            ->with('success', "GeoIP Firewall status updated to {$statusStr}! 🛡️");
+    }
+
+
+    /**
+     * Update Firewall Mode (Blacklist vs Whitelist)
+     */
+    public function updateFirewallMode(Request $request)
+    {
+        $mode = $request->input('mode', 'blacklist');
+
+        if (!in_array($mode, ['blacklist', 'whitelist'], true)) {
+            $mode = 'blacklist';
+        }
+
+        Cache::forever('geo_firewall_mode', $mode);
+
+        return redirect()->route('geo.firewall')
+            ->with('success', "Firewall active protection mode set to '" . strtoupper($mode) . "'! ⚙️");
+    }
+
+
+    /**
+     * Add or Remove Rule from Firewall Lists
+     */
+    public function updateFirewallRule(Request $request)
+    {
+        $action = $request->input('action');
+        $value = trim((string) $request->input('value'));
+
+        if (!$value) {
+            return redirect()->route('geo.firewall')
+                ->with('error', 'Please enter a valid country or IP value.');
+        }
+
+        switch ($action) {
+            case 'add_country':
+                $countries = Cache::get('geo_firewall_countries', ['China', 'Russia', 'North Korea']);
+                if (!in_array($value, $countries, true)) {
+                    $countries[] = $value;
+                    Cache::forever('geo_firewall_countries', array_values($countries));
+                }
+                $msg = "Country '{$value}' added to Blacklist.";
+                break;
+
+            case 'remove_country':
+                $countries = Cache::get('geo_firewall_countries', ['China', 'Russia', 'North Korea']);
+                $countries = array_diff($countries, [$value]);
+                Cache::forever('geo_firewall_countries', array_values($countries));
+                $msg = "Country '{$value}' removed from Blacklist.";
+                break;
+
+            case 'add_ip':
+                $ips = Cache::get('geo_firewall_ips', ['192.168.1.100']);
+                if (!in_array($value, $ips, true)) {
+                    $ips[] = $value;
+                    Cache::forever('geo_firewall_ips', array_values($ips));
+                }
+                $msg = "IP '{$value}' added to IP Blacklist.";
+                break;
+
+            case 'remove_ip':
+                $ips = Cache::get('geo_firewall_ips', ['192.168.1.100']);
+                $ips = array_diff($ips, [$value]);
+                Cache::forever('geo_firewall_ips', array_values($ips));
+                $msg = "IP '{$value}' removed from IP Blacklist.";
+                break;
+
+            case 'add_whitelist_country':
+                $whitelisted = Cache::get('geo_firewall_whitelist_countries', ['India', 'United States']);
+                if (!in_array($value, $whitelisted, true)) {
+                    $whitelisted[] = $value;
+                    Cache::forever('geo_firewall_whitelist_countries', array_values($whitelisted));
+                }
+                $msg = "Country '{$value}' added to Whitelist.";
+                break;
+
+            case 'remove_whitelist_country':
+                $whitelisted = Cache::get('geo_firewall_whitelist_countries', ['India', 'United States']);
+                $whitelisted = array_diff($whitelisted, [$value]);
+                Cache::forever('geo_firewall_whitelist_countries', array_values($whitelisted));
+                $msg = "Country '{$value}' removed from Whitelist.";
+                break;
+
+            default:
+                $msg = "No action executed.";
+                break;
+        }
+
+        return redirect()->route('geo.firewall')->with('success', $msg);
+    }
+
+
+    /**
+     * Clear Firewall Blocked Request Logs
+     */
+    public function clearFirewallLogs()
+    {
+        Cache::forget('geo_firewall_blocked_logs');
+
+        return redirect()->route('geo.firewall')
+            ->with('success', 'Firewall security violation logs cleared successfully.');
+    }
+
+
+    /**
+     * Real-Time World Heatmap Visualizer
+     */
+    public function heatmap()
+    {
+        $visitors = Visitor::whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
+
+        $heatPoints = $visitors->map(function ($v) {
+            return [
+                (float) $v->latitude,
+                (float) $v->longitude,
+                0.8
+            ];
+        });
+
+        $topClusters = Visitor::select('country', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('country')
+            ->where('country', '!=', '')
+            ->groupBy('country')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        return view('geo.heatmap', [
+            'visitors' => $visitors,
+            'heatPointsJson' => json_encode($heatPoints),
+            'totalHeatPoints' => $visitors->count(),
+            'topClusters' => $topClusters,
+        ]);
+    }
+
+
+    /**
+     * Geo-Smart Currency, Timezone & Regional Localization Studio
+     */
+    public function localization(Request $request)
+    {
+        $ip = $request->get('ip', $request->ip());
+
+        if ($ip === '127.0.0.1' || $ip === '::1') {
+            $ip = '49.36.0.1'; // Default test IP (India)
+        }
+
+        $location = geoip($ip);
+        $country = $location->country ?? 'India';
+        $city = $location->city ?? 'Mumbai';
+        $iso = strtolower($location->iso_code ?? 'in');
+        $currencyCode = $location->currency ?? 'INR';
+        $timezone = $location->timezone ?? 'Asia/Kolkata';
+
+        $currencyMap = [
+            'INR' => ['symbol' => '₹', 'name' => 'Indian Rupee', 'rate' => 83.50],
+            'USD' => ['symbol' => '$', 'name' => 'US Dollar', 'rate' => 1.00],
+            'EUR' => ['symbol' => '€', 'name' => 'Euro', 'rate' => 0.92],
+            'GBP' => ['symbol' => '£', 'name' => 'British Pound', 'rate' => 0.78],
+            'JPY' => ['symbol' => '¥', 'name' => 'Japanese Yen', 'rate' => 155.20],
+            'CAD' => ['symbol' => 'CA$', 'name' => 'Canadian Dollar', 'rate' => 1.36],
+            'AUD' => ['symbol' => 'A$', 'name' => 'Australian Dollar', 'rate' => 1.50],
+            'AED' => ['symbol' => 'AED', 'name' => 'UAE Dirham', 'rate' => 3.67],
+        ];
+
+        $currencyInfo = $currencyMap[$currencyCode] ?? ['symbol' => $currencyCode, 'name' => $currencyCode, 'rate' => 1.00];
+
+        try {
+            $localTime = Carbon::now($timezone)->format('h:i:s A (l, d M Y)');
+        } catch (\Throwable $e) {
+            $localTime = Carbon::now()->format('h:i:s A (l, d M Y)');
+            $timezone = 'UTC';
+        }
+
+        $callingCodes = [
+            'in' => '+91',
+            'us' => '+1',
+            'gb' => '+44',
+            'jp' => '+81',
+            'ca' => '+1',
+            'au' => '+61',
+            'ae' => '+971',
+            'de' => '+49',
+            'fr' => '+33',
+            'cn' => '+86',
+            'ru' => '+7',
+        ];
+
+        $callingCode = $callingCodes[$iso] ?? '+1';
+
+        return view('geo.localization', [
+            'ip' => $ip,
+            'country' => $country,
+            'city' => $city,
+            'iso' => $iso,
+            'currencyCode' => $currencyCode,
+            'currencySymbol' => $currencyInfo['symbol'],
+            'currencyName' => $currencyInfo['name'],
+            'exchangeRate' => $currencyInfo['rate'],
+            'timezone' => $timezone,
+            'localTime' => $localTime,
+            'callingCode' => $callingCode,
+            'currencyMap' => $currencyMap,
+        ]);
     }
 }
