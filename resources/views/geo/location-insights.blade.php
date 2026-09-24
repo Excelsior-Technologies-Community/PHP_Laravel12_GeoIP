@@ -326,6 +326,18 @@
                 Insights
             </a>
 
+            <a href="{{ route('geo.firewall') }}">
+                Firewall
+            </a>
+
+            <a href="{{ route('geo.heatmap') }}">
+                Heatmap
+            </a>
+
+            <a href="{{ route('geo.localization') }}">
+                Localization
+            </a>
+
         </div>
 
     </div>
